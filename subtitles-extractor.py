@@ -74,7 +74,12 @@ def extract_subtitle(video_file, stream_index_position, output_file):
         "-y"
     ]
     print(f"Running: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    for line in process.stdout:
+        print(line, end="")
+    process.wait()
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, cmd)
 
 def convert_subtitle_to_srt(input_file, output_file):
     ext = os.path.splitext(input_file)[1].lower()
@@ -144,24 +149,18 @@ def process_video_file(video_filepath, language):
         f"{filename_wo_ext}.{track['language']}{extension}"
     )
 
-    srt_pattern = os.path.join(
-        os.path.dirname(video_filepath),
-        f"{filename_wo_ext}.*.srt"
-    )
-    existing_srts = glob.glob(srt_pattern)
-
-    result["subtitle_file_original"] = subtitle_file_original
-
     subtitle_file_srt = os.path.join(
         os.path.dirname(video_filepath),
         f"{filename_wo_ext}.{track['language']}.srt"
     )
     result["subtitle_file_srt"] = subtitle_file_srt
 
-    if existing_srts:
-        print(f"SRT subtitle file(s) already exist: {', '.join(existing_srts)}")
+    result["subtitle_file_original"] = subtitle_file_original
+
+    if os.path.exists(subtitle_file_srt):
+        print(f"SRT subtitle file already exists: {subtitle_file_srt}")
         result["status"] = "srt_exists"
-        result["message"] = f"SRT exists: {', '.join(existing_srts)}"
+        result["message"] = f"SRT exists: {subtitle_file_srt}"
         return result
 
     if os.path.exists(subtitle_file_original):
@@ -204,7 +203,7 @@ def main():
 
     video_folder = os.path.abspath(args.directory)
     language = args.language
-    max_workers = max(2, multiprocessing.cpu_count()) / 2
+    max_workers = 1
 
     print(f"Video folder: {video_folder}")
     print(f"Language: {language}")
