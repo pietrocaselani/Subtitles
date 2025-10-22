@@ -2,6 +2,7 @@
 
 import os
 import argparse
+from pathlib import Path
 
 from babelfish import Language
 from subliminal import download_best_subtitles, region, save_subtitles, scan_videos
@@ -12,21 +13,7 @@ cache_file = os.path.join(script_dir, 'cachefile.dbm')
 # Configure the cache
 region.configure('dogpile.cache.dbm', arguments={'filename': cache_file})
 
-def main():
-    # Parse arguments
-    parser = argparse.ArgumentParser(description="Download subtitles for video files in a directory.")
-    parser.add_argument("directory", help="Path to the directory containing video files.")
-    parser.add_argument("-l", "--language-code", default="por-BR", help="Subtitle language code (default: por-BR)")
-    args = parser.parse_args()
-
-    video_folder = os.path.abspath(args.directory)
-    language_code = args.language_code
-
-    # Validate the directory
-    if not os.path.isdir(video_folder):
-        print(f"Error: The directory '{video_folder}' does not exist.")
-        return
-
+def download_subtitles_for_videos(video_folder: Path, language_code: str):
     # Scan for videos and their existing subtitles
     print(f"Scanning for video files in {video_folder}")
     videos = [video for video in scan_videos(video_folder) if "sample" not in video.name.lower()]
@@ -57,6 +44,23 @@ def main():
             print(f"No subtitles found for: {video.name}")
 
     print("Subtitle download complete.")
+
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(description="Download subtitles for video files in a directory.")
+    parser.add_argument("directory", help="Path to the directory containing video files.")
+    parser.add_argument("-l", "--language-code", default="por-BR", help="Subtitle language code (default: por-BR)")
+    args = parser.parse_args()
+
+    video_folder = Path(os.path.abspath(args.directory))
+    language_code = args.language_code
+
+    # Validate the directory
+    if not video_folder.is_dir():
+        print(f"Error: The directory '{video_folder}' does not exist.")
+        return
+
+    download_subtitles_for_videos(video_folder, language_code)
 
 if __name__ == "__main__":
     main()
