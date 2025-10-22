@@ -151,7 +151,11 @@ def process_files(directory, target_language, reference_language, audio_index=No
                 reference_subtitle_file = s
                 break
 
-        if reference_subtitle_file and subtitle_file_to_sync:
+        if not subtitle_file_to_sync:
+            print(f"No subtitle found for {video_file} with language {target_language}.")
+            return
+
+        if reference_subtitle_file:
             print(f"Found reference subtitle: {reference_subtitle_file} for {video_file}")
             synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle_file, old_subtitles_dir)
         else:

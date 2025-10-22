@@ -8,7 +8,6 @@ from subliminal import scan_videos
 from subliminal.subtitle import FORMAT_TO_EXTENSION
 from tabulate import tabulate
 import concurrent.futures
-import multiprocessing
 from convert_sup_to_srt import convert_sup_to_srt
 
 FORMAT_TO_EXTENSION = {

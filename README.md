@@ -39,7 +39,7 @@ A collection of Python scripts for batch subtitle extraction, conversion, downlo
 
 ## Script Summaries
 
-### 1. `subtitles-extractor.py`
+### 1. `subtitles_extractor.py`
 
 **Purpose:**
 Batch-extracts and converts subtitles from video files. Supports OCR for .sup/PGS files using Tesseract or Subtitle Edit. Handles multiple files in parallel and supports language code detection in filenames.
@@ -47,7 +47,7 @@ Batch-extracts and converts subtitles from video files. Supports OCR for .sup/PG
 **Usage:**
 
 ```sh
-python subtitles-extractor.py <directory> [--language-code <code>]
+python subtitles_extractor.py <directory> [--language-code <code>]
 ```
 
 - `<directory>`: Directory containing video files.
@@ -69,7 +69,7 @@ python convert_sup_to_srt.py --input <file.sup> --output <file.srt> [--method te
 - `--method`: OCR method (`tesseract` or `subtitleedit`).
 - `--lang`: Language code for OCR (e.g., `eng`, `por`).
 
-### 3. `subtitles-downloader.py`
+### 3. `subtitles_downloader.py`
 
 **Purpose:**
 Downloads subtitles for video files in a directory using the `subliminal` library. Supports specifying the desired language code.
@@ -77,13 +77,13 @@ Downloads subtitles for video files in a directory using the `subliminal` librar
 **Usage:**
 
 ```sh
-python subtitles-downloader.py --input-dir <directory> [--language-code <code>]
+python subtitles_downloader.py --input-dir <directory> [--language-code <code>]
 ```
 
 - `--input-dir`: Directory containing video files.
 - `--language-code`: Language code for subtitles (default: `pt-BR`).
 
-### 4. `subtitles-sync.py`
+### 4. `subtitles_sync.py`
 
 **Purpose:**
 Synchronizes subtitle files with their corresponding videos or with a reference subtitle using `alass-cli`. Handles language codes in filenames and robustly matches files. Moves old subtitles to an `old-subtitles` folder for backup.
@@ -92,7 +92,7 @@ Synchronizes subtitle files with their corresponding videos or with a reference 
 Run interactively:
 
 ```sh
-python subtitles-sync.py
+python subtitles_sync.py
 ```
 
 You will be prompted for:
