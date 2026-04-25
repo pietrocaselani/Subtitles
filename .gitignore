@@ -139,3 +139,6 @@ qbt-scripts-info.json
 qbt-env.json
 *.cookies
 *.dbm
+
+node_modules
+package-lock.json

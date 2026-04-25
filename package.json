@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "guessit-js": "^3.9.0",
+    "mediainfo-wrapper": "^1.2.0",
+    "node-fetch": "^3.3.2",
+    "opensubtitles-api": "^5.1.2"
+  }
+}
