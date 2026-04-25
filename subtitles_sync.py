@@ -81,8 +81,6 @@ def synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle
         print(f"Error encoding subtitle file {subtitle_file_to_sync} as UTF-8: {e}")
         return
 
-
-
     # Call the alass-cli command: alass-cli reference_subtitle.ssa incorrect_subtitle.srt output.srt
     try:
         command = ["alass-cli", reference_subtitle_path, input_subtitle_path, temp_subtitle_path]
@@ -153,7 +151,7 @@ def process_files(directory, target_language, reference_language, audio_index=No
 
         if not subtitle_file_to_sync:
             print(f"No subtitle found for {video_file} with language {target_language}.")
-            return
+            continue
 
         if reference_subtitle_file:
             print(f"Found reference subtitle: {reference_subtitle_file} for {video_file}")
