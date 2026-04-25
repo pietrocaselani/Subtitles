@@ -102,6 +102,62 @@ You will be prompted for:
 - Reference language code (e.g., `eng`)
 - Target language code (e.g., `pt-BR`)
 
+### 5. `subtitles_uploader.mjs`
+
+**Purpose:**
+Uploads subtitle files to OpenSubtitles platform. Matches video files with their corresponding .srt subtitles, fetches movie/episode details from TMDB, and performs batch uploads. Tracks uploaded subtitles and failed attempts in result files.
+
+**Requirements:**
+
+- Node.js 16+
+- npm packages: `opensubtitles-api`, `guessit-js`, `mediainfo-wrapper`, `node-fetch`
+
+**Installation:**
+
+```sh
+npm install
+```
+
+**Usage:**
+
+```sh
+node subtitles_uploader.mjs <directory> <config.json>
+```
+
+- `<directory>`: Directory containing video and subtitle files to upload.
+- `<config.json>`: Path to configuration file with credentials and API keys.
+
+**Configuration File (`config.json`):**
+
+```json
+{
+  "opensubtitles": {
+    "username": "user",
+    "password": "pass"
+  },
+  "tmdb_api": "my-api-key",
+  "upload_results_path": "upload_results.jsonl",
+  "upload_fails_path": "upload_results_fails.jsonl"
+}
+```
+
+**Configuration Fields:**
+
+- `opensubtitles.username`: Your OpenSubtitles username
+- `opensubtitles.password`: Your OpenSubtitles password
+- `tmdb_api`: Your TMDB (The Movie Database) API key
+- `upload_results_path`: Path to save successful upload logs (JSONL format)
+- `upload_fails_path`: Path to save failed upload logs (JSONL format)
+
+**Features:**
+
+- Automatically matches video files with .srt subtitle files
+- Prefers Portuguese (pt-BR/pob) subtitles if multiple options exist
+- Fetches IMDB and media details from TMDB to enhance uploads
+- Skips already-uploaded subtitles (caches results)
+- Logs all upload attempts and failures
+- Supports multiple video formats: .mkv, .mp4, .avi, .mov
+
 ---
 
 ## Environment Setup
