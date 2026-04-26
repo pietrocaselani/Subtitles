@@ -182,4 +182,5 @@ node subtitles_uploader.mjs <directory> <config.json>
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
 - [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
 - [alass-cli](https://github.com/kaegi/alass)
+- [ffsubsync](https://github.com/smacke/ffsubsync)
 - [subliminal](https://github.com/Diaoul/subliminal)

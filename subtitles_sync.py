@@ -14,6 +14,58 @@ from subliminal import scan_videos
 video_extensions = ('.mp4', '.mkv', '.avi')
 subtitle_extensions = ('.srt', '.sub', '.txt')
 
+class SubtitleSyncEngine:
+    def sync_with_video(self, video_path, subtitle_path, output_path, audio_index=None):
+        raise NotImplementedError
+
+    def sync_with_reference(self, reference_subtitle, subtitle_path, output_path):
+        raise NotImplementedError
+
+class AlassEngine(SubtitleSyncEngine):
+    def sync_with_video(self, video_path, subtitle_path, output_path, audio_index=None):
+        command = ["alass-cli"]
+        if audio_index is not None:
+            command.extend(["--index", str(audio_index)])
+        command.extend([video_path, subtitle_path, output_path])
+
+        subprocess.run(command, check=True)
+
+    def sync_with_reference(self, reference_subtitle, subtitle_path, output_path):
+        command = ["alass-cli", reference_subtitle, subtitle_path, output_path]
+        subprocess.run(command, check=True)
+
+class FFSubsyncEngine(SubtitleSyncEngine):
+    def sync_with_video(self, video_path, subtitle_path, output_path, audio_index=None):
+        command = [
+            "ffsubsync",
+            video_path,
+            "-i", subtitle_path,
+            "-o", output_path
+        ]
+
+        if audio_index is not None:
+            command.extend(["--reference-stream", str(audio_index)])
+
+        subprocess.run(command, check=True)
+
+    def sync_with_reference(self, reference_subtitle, subtitle_path, output_path):
+        command = [
+            "ffsubsync",
+            reference_subtitle,
+            "-i", subtitle_path,
+            "-o", output_path
+        ]
+
+        subprocess.run(command, check=True)
+
+def get_engine(engine_name):
+    if engine_name == "alass":
+        return AlassEngine()
+    elif engine_name == "ffsubsync":
+        return FFSubsyncEngine()
+    else:
+        raise ValueError(f"Unknown engine: {engine_name}")
+
 def ensure_utf8_encoding(file_path):
     # Detect the encoding of the subtitle file
     with open(file_path, 'rb') as file:
@@ -29,7 +81,7 @@ def ensure_utf8_encoding(file_path):
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(content)
 
-def synchronize_subtitles_by_video(video_file, subtitle_file, old_subtitles_dir, audio_index=None):
+def synchronize_subtitles_by_video(engine, video_file, subtitle_file, old_subtitles_dir, audio_index=None):
     input_video_path = os.path.join(directory, video_file)
     input_subtitle_path = os.path.join(directory, subtitle_file)
     subtitle_name, subtitle_ext = os.path.splitext(subtitle_file)
@@ -44,14 +96,13 @@ def synchronize_subtitles_by_video(video_file, subtitle_file, old_subtitles_dir,
         print(f"Error encoding subtitle file {subtitle_file} as UTF-8: {e}")
         return
 
-    # Call the alass-cli command
     try:
-        command = ["alass-cli"]
-        if audio_index is not None:
-            command.extend(["--index", str(audio_index)])
-        command.extend([input_video_path, input_subtitle_path, temp_subtitle_path])
-
-        subprocess.run(command, check=True)
+        engine.sync_with_video(
+            input_video_path,
+            input_subtitle_path,
+            temp_subtitle_path,
+            audio_index
+        )
         print(f"Synced subtitle saved to: {temp_subtitle_path}")
 
         # Move the original subtitle file to "old-subtitles" folder
@@ -65,7 +116,7 @@ def synchronize_subtitles_by_video(video_file, subtitle_file, old_subtitles_dir,
         if os.path.exists(temp_subtitle_path):
             os.remove(temp_subtitle_path)
 
-def synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle_file, old_subtitles_dir):
+def synchronize_subtitles_by_reference(engine, subtitle_file_to_sync, reference_subtitle_file, old_subtitles_dir):
     # Prepare paths
     input_subtitle_path = os.path.join(directory, subtitle_file_to_sync)
     reference_subtitle_path = os.path.join(directory, reference_subtitle_file)
@@ -81,10 +132,12 @@ def synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle
         print(f"Error encoding subtitle file {subtitle_file_to_sync} as UTF-8: {e}")
         return
 
-    # Call the alass-cli command: alass-cli reference_subtitle.ssa incorrect_subtitle.srt output.srt
     try:
-        command = ["alass-cli", reference_subtitle_path, input_subtitle_path, temp_subtitle_path]
-        subprocess.run(command, check=True)
+        engine.sync_with_reference(
+            reference_subtitle_path,
+            input_subtitle_path,
+            temp_subtitle_path
+        )
         print(f"Synced subtitle saved to: {temp_subtitle_path}")
 
         # Move the original subtitle file to "old-subtitles" folder
@@ -99,7 +152,7 @@ def synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle
             os.remove(temp_subtitle_path)
 
 
-def process_files(directory, target_language, reference_language, audio_index=None):
+def process_files(engine, directory, target_language, reference_language, audio_index=None):
     """
     Synchronize subtitles for all video files in the given directory.
 
@@ -111,10 +164,8 @@ def process_files(directory, target_language, reference_language, audio_index=No
     # List all files in the directory
     files = os.listdir(directory)
 
-    videos = [video.name for video in scan_videos(directory) if "sample" not in video.name.lower()]
-
     # Separate video and subtitle files
-    # videos = [f for f in files if f.lower().endswith(video_extensions)]
+    videos = [video.name for video in scan_videos(directory) if "sample" not in video.name.lower()]
     subtitle_files = [f for f in files if f.lower().endswith(subtitle_extensions)]
 
     print(f"Number of video files: {len(videos)}")
@@ -155,14 +206,15 @@ def process_files(directory, target_language, reference_language, audio_index=No
 
         if reference_subtitle_file:
             print(f"Found reference subtitle: {reference_subtitle_file} for {video_file}")
-            synchronize_subtitles_by_reference(subtitle_file_to_sync, reference_subtitle_file, old_subtitles_dir)
+            synchronize_subtitles_by_reference(engine, subtitle_file_to_sync, reference_subtitle_file, old_subtitles_dir)
         else:
             if not subtitle_file_to_sync and matching_subtitles:
                 subtitle_file_to_sync = matching_subtitles[0]
 
             if matching_subtitles:
-                synchronize_subtitles_by_video(video_file, subtitle_file_to_sync, old_subtitles_dir, audio_index)
+                synchronize_subtitles_by_video(engine, video_file, subtitle_file_to_sync, old_subtitles_dir, audio_index)
             else:
+
                 print(f"No matching subtitle found for: {video_file}")
 
 if __name__ == "__main__":
@@ -171,14 +223,22 @@ if __name__ == "__main__":
     audio_index = input("Enter the audio index (or press Enter to skip): ").strip()
     reference_language = input("Enter the reference language: ").strip()
     target_language = input("Enter the language to sync: ").strip()
-    audio_index = int(audio_index) if audio_index else None
+    engine_name = input("Enter engine (alass/ffsubsync): ").strip().lower()
+
+    if engine_name is None or engine_name == "":
+        print("No engine provided. Exiting.")
+        exit(1)
 
     if not target_language:
         print("No target language provided. Exiting.")
         exit(1)
 
+    engine = get_engine(engine_name)
+
+    audio_index = int(audio_index) if audio_index else None
+
     # Check if the directory exists
     if os.path.isdir(directory):
-        process_files(directory, target_language, reference_language, audio_index)
+        process_files(engine, directory, target_language, reference_language, audio_index)
     else:
         print(f"The directory {directory} does not exist.")
